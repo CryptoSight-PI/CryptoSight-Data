@@ -8,12 +8,17 @@ except ImportError:
     pynvml = None
 import csv
 
-# discretizar com array de valores e validação de percentual de alteração
-
 def capture(components):
     user = get_mac_address()
+
+    last_net = psutil.net_io_counters()
+    last_time = time.time()
     
     for i in range(5):
+        current_time = time.time()
+        time_delta = current_time - last_time
+        current_net = psutil.net_io_counters()
+        
         cpu_percent = psutil.cpu_percent(interval=1) if components[0] == 1 else None
         cpu_frequency = round(((psutil.cpu_freq().current) / 1000), 2) if components[1] == 1 else None
 
@@ -25,7 +30,8 @@ def capture(components):
 
         if components[6] == 1:
             try:
-                upload_speed = round(((psutil.net_io_counters().bytes_sent) / 1000000000), 2)
+                bytes_sent_delta = current_net.bytes_sent - last_net.bytes_sent
+                upload_speed = round((bytes_sent_delta * 8) / (time_delta * 1_000_000), 2)
             except Exception:
                 upload_speed = 0.0
         else:
@@ -33,15 +39,19 @@ def capture(components):
 
         if components[7] == 1:
             try:
-                download_speed = round(((psutil.net_io_counters().bytes_recv) / 1000000000), 2)
+                bytes_recv_delta = current_net.bytes_recv - last_net.bytes_recv
+                download_speed = round((bytes_recv_delta * 8) / (time_delta * 1_000_000), 2)
             except Exception:
                 download_speed = 0.0
         else:
             download_speed = None
 
+        last_net = current_net
+        last_time = current_time
+
         if components[8] == 1:
             try:
-                temperature = psutil.sensors_temperatures()
+                temperature = psutil.sensors_temperatures()[0].current
             except Exception:
                 temperature = 0.0
         else:
@@ -49,7 +59,7 @@ def capture(components):
 
         if components[9] == 1:
             try:
-                fans_speed = psutil.sensors_fans()
+                fans_speed = psutil.sensors_fans().current
             except Exception:
                 fans_speed = 0.0
         else:
@@ -103,8 +113,8 @@ def exhibit(data):
     line_swap_memory_total = f"Total de memória swap: {data[4]} GiB"
     line_swap_memory_used = f"Total de memória swap usada: {data[5]} GiB"
     line_swap_memory_percent = f"Uso atual da memória swap: {data[6]}%"
-    line_upload_speed = f"Velocidade atual de upload da rede: {data[7]} Mbps"
-    line_download_speed = f"Velocidade atual de download da rede: {data[8]} Mbps"
+    line_upload_bytes = f"Tráfego atual de upload de bytes da rede: {data[7]} Mbps"
+    line_download_bytes = f"Tráfego atual de download de bytes da rede: {data[8]} Mbps"
     line_temperature = f"Temperatura atual: {data[9]} graus Celsius"
     line_fans_speed = f"Velocidade atual das ventoinhas: {data[10]} RPM"
     line_disk = f"Espaço livre em disco: {data[11]} GiB"
@@ -121,8 +131,8 @@ def exhibit(data):
     | {line_swap_memory_total:<60} |
     | {line_swap_memory_used:<60} |
     | {line_swap_memory_percent:<60} |
-    | {line_upload_speed:<60} |
-    | {line_download_speed:<60} |
+    | {line_upload_bytes:<60} |
+    | {line_download_bytes:<60} |
     | {line_temperature:<60} |
     | {line_fans_speed:<60} |
     | {line_disk:<60} |
@@ -141,4 +151,4 @@ with open('data.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=';')
         writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "timestamp"])
 
-capture([1,0,1,0,0,1,1,1,1,1,1,1,1])
+capture([1,1,1,1,1,1,1,1,1,1,1,1,1])
