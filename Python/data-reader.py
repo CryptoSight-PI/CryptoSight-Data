@@ -1,11 +1,18 @@
-import glob
 import pandas as pd
 
-file_paths = glob.glob("./data/*.csv")
+df = pd.read_csv("data.csv", delimiter=";" , encoding= "utf-8")
 
-df = pd.concat(([pd.read_csv(file, sep=';') for file in file_paths]), ignore_index=True)
+df.columns = df.columns.str.strip()
+df["timestamp"] = pd.to_datetime(df['timestamp'])
+ultima = df["timestamp"].max()
+uma_hora =  df[df["timestamp"] >= (ultima - pd.Timedelta(hours=1))]
+um_dia =  df[df["timestamp"] >= (ultima - pd.Timedelta(hours=24))]
+
+
+
 
 media_cpu = round(df["cpu_percent"].mean(), 2)
+media_cpu_1h = round(uma_hora["cpu_percent"].mean(), 2)
 pico_cpu = df["cpu_percent"].max()
 
 media_gpu = round(df["gpu_usage"].mean(), 2)
@@ -15,6 +22,7 @@ media_consumo_gpu = round(df["gpu_energy"].mean(), 2)
 pico_consumo_gpu = df["gpu_energy"].max()
 
 media_ram = round(df["ram_percent"].mean(), 2)
+media_ram_1h = round(uma_hora["ram_percent"].mean(), 2)
 pico_ram = df["ram_percent"].max()
 
 menor_disco = df["disk"].min()
@@ -34,12 +42,14 @@ media_swap = round(df["swap_memory_percent"].mean(), 2)
 pico_swap = round(df["swap_memory_percent"].max(), 2)
 
 line_media_cpu = f"Média de uso da CPU: {media_cpu}%"
+line_media_cpu_1h = f"Média de uso da CPU na última hora: {media_cpu_1h}%"
 line_pico_cpu = f"Pico de uso da CPU: {pico_cpu}%"
 line_media_gpu = f"Média de uso da CPU: {media_gpu}%"
 line_pico_gpu = f"Pico de uso da GPU: {pico_gpu}%"
 line_media_consumo_gpu = f"Média de comsumo de energia da CPU: {media_gpu} W"
 line_pico_consumo_gpu = f"Pico de consumo de energia da GPU: {pico_gpu} W"
 line_media_ram = f"Média de uso da memória RAM: {media_ram}%"
+line_media_ram_1h = f"Média de uso da memória RAM na última hora: {media_ram_1h}%"
 line_pico_ram = f"Pico de uso da memória RAM: {pico_ram}%"
 line_menor_disco = f"Espaço mínimo em disco: {menor_disco} GiB"
 line_media_upload = f"Média do tráfego de upload de bytes: {media_upload} Mbps"
@@ -56,12 +66,14 @@ line_pico_swap = f"Pico de uso da memória SWAP: {pico_gpu}%"
 print(f"""
     ----------------------------------------------------------------
     | {line_media_cpu:<60} |
+    | {line_media_cpu_1h:<60} |
     | {line_pico_cpu:<60} |
     | {line_media_gpu:<60} |
     | {line_pico_gpu:<60} |
     | {line_media_consumo_gpu:<60} |
     | {line_pico_consumo_gpu:<60} |
     | {line_media_ram:<60} |
+    | {line_media_ram_1h:<60} |
     | {line_pico_ram:<60} |
     | {line_menor_disco:<60} |
     | {line_media_upload:<60} |
