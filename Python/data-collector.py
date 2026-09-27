@@ -8,6 +8,7 @@ except ImportError:
     pynvml = None
 import csv
 import os
+from config import cursor
 
 def capture(components):
     user = get_mac_address()
