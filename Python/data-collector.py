@@ -159,6 +159,8 @@ if(not os.path.exists('data.csv')):
 query = "select e.id , m.mac_address from empresa e join farm f on f.id_empresa = e.id join maquina m on m.id_farm = f.id where m.mac_address = (%s);"
 cursor.execute(query , [user])
 resultado1 = cursor.fetchall()
+id_empresa = resultado1[0][0]
+print(id_empresa)
 if(resultado1):
     try:
         print("mac no banco")
