@@ -166,7 +166,19 @@ if(resultado1):
         cursor.execute(query2, [user])
         resultado2 = cursor.fetchall()
         print(resultado2)
-        capture([1,1,1,1,1,1,1,1,1,1,1,1,1])
+        capture([1 if 'cpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'cpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'ram' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'swap' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'swap' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'swap' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'rede' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'rede' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'temperatura' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'ventoinha' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'disco' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'gpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'gpu' in (i[0].lower() for i in resultado2) else 0])
     except KeyboardInterrupt:
         print("Encerrado")
 else:
