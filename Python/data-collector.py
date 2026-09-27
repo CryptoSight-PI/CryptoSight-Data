@@ -162,6 +162,10 @@ resultado1 = cursor.fetchall()
 if(resultado1):
     try:
         print("mac no banco")
+        query2 = "select c.nome from empresa e join farm f on f.id_empresa = e.id join maquina m on m.id_farm = f.id join maquina_componente mc on mc.id_maquina = m.id join componente c on c.id = mc.id_componente where m.mac_address = (%s) and mc.monitorado = 1;"
+        cursor.execute(query2, [user])
+        resultado2 = cursor.fetchall()
+        print(resultado2)
         capture([1,1,1,1,1,1,1,1,1,1,1,1,1])
     except KeyboardInterrupt:
         print("Encerrado")
