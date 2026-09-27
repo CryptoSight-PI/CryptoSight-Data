@@ -10,8 +10,9 @@ import csv
 import os
 from config import cursor
 
+user = get_mac_address()
 def capture(components):
-    user = get_mac_address()
+    
 
     last_net = psutil.net_io_counters()
     last_time = time.time()
@@ -152,8 +153,18 @@ if(not os.path.exists('data.csv')):
     with open('data.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "timestamp"])
-try:
-    capture([1,1,1,1,1,1,1,1,1,1,1,1,1])
-except KeyboardInterrupt:
-    print("Encerrado")
+
+
+
+query = "select e.id , m.mac_address from empresa e join farm f on f.id_empresa = e.id join maquina m on m.id_farm = f.id where m.mac_address = (%s);"
+cursor.execute(query , [user])
+resultado1 = cursor.fetchall()
+if(resultado1):
+    try:
+        print("mac no banco")
+        capture([1,1,1,1,1,1,1,1,1,1,1,1,1])
+    except KeyboardInterrupt:
+        print("Encerrado")
+else:
+    print("seu mac nao esta no banco")
     
