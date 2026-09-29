@@ -8,9 +8,11 @@ except ImportError:
     pynvml = None
 import csv
 import os
+from config import cursor
 
+user = get_mac_address()
 def capture(components):
-    user = get_mac_address()
+    
 
     last_net = psutil.net_io_counters()
     last_time = time.time()
@@ -72,11 +74,13 @@ def capture(components):
             try: 
                 pynvml.nvmlInit()
                 deviceCount = pynvml.nvmlDeviceGetCount()
+                gpu_usage = []
                 for j in range(deviceCount):
                     handle = pynvml.nvmlDeviceGetHandleByIndex(j)
                     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
 
-                    gpu_usage = round(((info.used * 100) / info.total), 2)
+                    usage = round(((info.used * 100) / info.total), 2)
+                    gpu_usage.append(usage)
 
                 pynvml.nvmlShutdown()
             except Exception:
@@ -88,11 +92,12 @@ def capture(components):
             try:
                 pynvml.nvmlInit()
                 deviceCount = pynvml.nvmlDeviceGetCount()
-
-                handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-                power_mw = pynvml.nvmlDeviceGetPowerUsage(handle)
-                gpu_energy = round((power_mw / 1000.0), 2)
-
+                gpu_energy = []
+                for j in range(deviceCount):
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(j)
+                    power_mw = pynvml.nvmlDeviceGetPowerUsage(handle)
+                    energy = round((power_mw / 1000.0), 2)
+                    gpu_energy.append(energy)
                 pynvml.nvmlShutdown()
             except Exception:
                 gpu_energy = 0.0
@@ -151,8 +156,36 @@ if(not os.path.exists('data.csv')):
     with open('data.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "timestamp"])
-try:
-    capture([1,1,1,1,1,1,1,1,1,1,1,1,1])
-except KeyboardInterrupt:
-    print("Encerrado")
+
+
+
+query = "select e.id , m.mac_address from empresa e join farm f on f.id_empresa = e.id join maquina m on m.id_farm = f.id where m.mac_address = (%s);"
+cursor.execute(query , [user])
+resultado1 = cursor.fetchall()
+id_empresa = resultado1[0][0]
+print(id_empresa)
+if(resultado1):
+    try:
+        print("mac no banco")
+        query2 = "select c.nome from empresa e join farm f on f.id_empresa = e.id join maquina m on m.id_farm = f.id join maquina_componente mc on mc.id_maquina = m.id join componente c on c.id = mc.id_componente where m.mac_address = (%s) and mc.monitorado = 1;"
+        cursor.execute(query2, [user])
+        resultado2 = cursor.fetchall()
+        print(resultado2)
+        capture([1 if 'cpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'cpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'ram' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'swap' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'swap' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'swap' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'rede' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'rede' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'temperatura' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'ventoinha' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'disco' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'gpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'gpu' in (i[0].lower() for i in resultado2) else 0])
+    except KeyboardInterrupt:
+        print("Encerrado")
+else:
+    print("seu mac nao esta no banco")
     
