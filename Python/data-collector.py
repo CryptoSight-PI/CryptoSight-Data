@@ -74,11 +74,13 @@ def capture(components):
             try: 
                 pynvml.nvmlInit()
                 deviceCount = pynvml.nvmlDeviceGetCount()
+                gpu_usage = []
                 for j in range(deviceCount):
                     handle = pynvml.nvmlDeviceGetHandleByIndex(j)
                     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
 
-                    gpu_usage = round(((info.used * 100) / info.total), 2)
+                    usage = round(((info.used * 100) / info.total), 2)
+                    gpu_usage.append(usage)
 
                 pynvml.nvmlShutdown()
             except Exception:
@@ -90,11 +92,12 @@ def capture(components):
             try:
                 pynvml.nvmlInit()
                 deviceCount = pynvml.nvmlDeviceGetCount()
-
-                handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-                power_mw = pynvml.nvmlDeviceGetPowerUsage(handle)
-                gpu_energy = round((power_mw / 1000.0), 2)
-
+                gpu_energy = []
+                for j in range(deviceCount):
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(j)
+                    power_mw = pynvml.nvmlDeviceGetPowerUsage(handle)
+                    energy = round((power_mw / 1000.0), 2)
+                    gpu_energy.append(energy)
                 pynvml.nvmlShutdown()
             except Exception:
                 gpu_energy = 0.0
