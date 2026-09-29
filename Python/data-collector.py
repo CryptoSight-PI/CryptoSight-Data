@@ -121,7 +121,7 @@ def capture(components):
         exhibit([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp])
         store([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp], nome_arquivo)
 
-        time.sleep(intervalo_captura)
+        time.sleep(intervalo_captura - 1)
 
 def exhibit(data):
     line_user = f"Endereço MAC do dispositivo: {data[0]}"
