@@ -180,7 +180,7 @@ def exhibit(data):
     line_gpu_fan_speed = f"Uso atual da GPU: {data[14]}%"
     line_gpu_energy = f"Consumo atual de energia elétrica pela GPU: {data[15]} W"
     line_timestamp = f"Momento de captura: {data[16].strftime('%Y-%m-%d %H:%M:%S')}"
-    line_machine_code = f"Código de identificação da máquina: {data[17]}"
+    line_machine_code = f"Código de identificação da máquina: {data[1]}"
 
     print(f"""
     ----------------------------------------------------------------
@@ -240,6 +240,8 @@ if(resultado1):
                     1 if 'temperatura' in (i[0].lower() for i in resultado2) else 0,
                     1 if 'ventoinha' in (i[0].lower() for i in resultado2) else 0,
                     1 if 'disco' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'gpu' in (i[0].lower() for i in resultado2) else 0,
+                    1 if 'gpu' in (i[0].lower() for i in resultado2) else 0,
                     1 if 'gpu' in (i[0].lower() for i in resultado2) else 0,
                     1 if 'gpu' in (i[0].lower() for i in resultado2) else 0])
     except KeyboardInterrupt:
