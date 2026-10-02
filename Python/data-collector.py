@@ -10,15 +10,27 @@ import csv
 import os
 from config import cursor
 
+intervalo_captura = 10
+intervalo_csv = 60
+
 user = get_mac_address()
 def capture(components):
     
 
     last_net = psutil.net_io_counters()
     last_time = time.time()
+    tempo_inicio_csv = time.time()
+    data_atual = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    nome_arquivo = f"{id_empresa}-{data_atual}-{user.replace(':', '-')}.csv"
     
-    for i in range(5):
+    while True:
         current_time = time.time()
+
+        if(current_time - tempo_inicio_csv >= intervalo_csv):
+            data_atual = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            nome_arquivo = f"{id_empresa}-{data_atual}-{user.replace(':', '-')}.csv"
+            tempo_inicio_csv = current_time
+            
         time_delta = current_time - last_time
         current_net = psutil.net_io_counters()
         
@@ -107,9 +119,9 @@ def capture(components):
         timestamp = datetime.now()
 
         exhibit([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp])
-        store([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp])
+        store([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp], nome_arquivo)
 
-        time.sleep(1)
+        time.sleep(intervalo_captura - 1)
 
 def exhibit(data):
     line_user = f"Endereço MAC do dispositivo: {data[0]}"
@@ -148,15 +160,16 @@ def exhibit(data):
     ----------------------------------------------------------------
     """)
 
-def store(data):
-    with open('data.csv', 'a', newline='') as csvfile:
+def store(data, nome_arquivo):
+    if(not os.path.exists(nome_arquivo)):
+        with open(nome_arquivo, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "timestamp"])
+    
+    with open(nome_arquivo, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=';')
         writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14]])
-if(not os.path.exists('data.csv')):
-    with open('data.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=';')
-            writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "timestamp"])
-
+   
 
 
 query = "select e.id , m.mac_address from empresa e join farm f on f.id_empresa = e.id join maquina m on m.id_farm = f.id where m.mac_address = (%s);"
