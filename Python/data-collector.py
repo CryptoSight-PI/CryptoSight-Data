@@ -14,6 +14,37 @@ intervalo_captura = 10
 intervalo_csv = 60
 
 user = get_mac_address()
+
+
+def get_fan_speeds():
+    if not hasattr(psutil, "sensors_fans"):
+        return {} 
+
+    result = {}
+    for chip, fans in psutil.sensors_fans().items():
+        for fan in fans:
+            result[fan.label] = fan.current
+    return result
+
+speeds = get_fan_speeds() 
+
+def get_cpu_gpu_temps():
+    if not hasattr(psutil, "sensors_temperatures"):
+        return None, None  
+
+    temps = psutil.sensors_temperatures()
+
+    cpu = None
+    for chip in ('k10temp', 'coretemp', 'zenpower'):
+        if chip in temps and temps[chip]:
+            cpu = temps[chip][0].current
+            break
+
+    gpu = temps['amdgpu'][0].current if temps.get('amdgpu') else None
+
+    return cpu, gpu
+cpu_temp, gpu_temp = get_cpu_gpu_temps()
+
 def capture(components):
     
 
@@ -68,15 +99,18 @@ def capture(components):
             try:
                 temperature = psutil.sensors_temperatures()[0].current
             except Exception:
-                temperature = 0.0
+                temperature = cpu_temp
         else:
             temperature = None
 
         if components[9] == 1:
+            
             try:
                 fans_speed = psutil.sensors_fans().current
+
             except Exception:
-                fans_speed = 0.0
+
+                fans_speed = speeds.get('cpu_fan')
         else:
             fans_speed = None
 
@@ -117,6 +151,7 @@ def capture(components):
             gpu_energy = None
 
         timestamp = datetime.now()
+
         machine_code = 'COD0001'
 
         exhibit([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp, machine_code])
@@ -204,4 +239,8 @@ if(resultado1):
         print("Encerrado")
 else:
     print("seu mac nao esta no banco")
-    
+
+
+
+
+
