@@ -14,6 +14,37 @@ intervalo_captura = 10
 intervalo_csv = 60
 
 user = get_mac_address()
+
+
+def get_fan_speeds():
+    if not hasattr(psutil, "sensors_fans"):
+        return {} 
+
+    result = {}
+    for chip, fans in psutil.sensors_fans().items():
+        for fan in fans:
+            result[fan.label] = fan.current
+    return result
+
+speeds = get_fan_speeds() 
+
+def get_cpu_gpu_temps():
+    if not hasattr(psutil, "sensors_temperatures"):
+        return None, None  
+
+    temps = psutil.sensors_temperatures()
+
+    cpu = None
+    for chip in ('k10temp', 'coretemp', 'zenpower'):
+        if chip in temps and temps[chip]:
+            cpu = temps[chip][0].current
+            break
+
+    gpu = temps['amdgpu'][0].current if temps.get('amdgpu') else None
+
+    return cpu, gpu
+cpu_temp, gpu_temp = get_cpu_gpu_temps()
+
 def capture(components):
     
 
@@ -68,15 +99,18 @@ def capture(components):
             try:
                 temperature = psutil.sensors_temperatures()[0].current
             except Exception:
-                temperature = 0.0
+                temperature = cpu_temp
         else:
             temperature = None
 
         if components[9] == 1:
+            
             try:
                 fans_speed = psutil.sensors_fans().current
+
             except Exception:
-                fans_speed = 0.0
+
+                fans_speed = speeds.get('cpu_fan')
         else:
             fans_speed = None
 
@@ -95,6 +129,9 @@ def capture(components):
                     gpu_usage.append(usage)
 
                 pynvml.nvmlShutdown()
+
+                gpu_temperature = gpu_temp
+                gpu_fan_speed = speeds.get('gpu_fan')
             except Exception:
                 gpu_usage = 0.0
         else:
@@ -117,10 +154,11 @@ def capture(components):
             gpu_energy = None
 
         timestamp = datetime.now()
+
         machine_code = 'COD0001'
 
-        exhibit([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp, machine_code])
-        store([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, timestamp, machine_code], nome_arquivo)
+        exhibit([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, gpu_temp, gpu_fan_speed, timestamp, machine_code])
+        store([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, gpu_temp, gpu_fan_speed, timestamp, machine_code], nome_arquivo)
 
         time.sleep(intervalo_captura - 1)
 
@@ -138,9 +176,11 @@ def exhibit(data):
     line_fans_speed = f"Velocidade atual das ventoinhas: {data[10]} RPM"
     line_disk = f"Espaço livre em disco: {data[11]} GiB"
     line_gpu_usage = f"Uso atual da GPU: {data[12]}%"
-    line_gpu_energy = f"Consumo atual de energia elétrica pela GPU: {data[13]} W"
-    line_timestamp = f"Momento de captura: {data[14].strftime('%Y-%m-%d %H:%M:%S')}"
-    line_machine_code = f"Código de identificação da máquina: {data[15]}"
+    line_gpu_temp = f"Uso atual da GPU: {data[13]}%"
+    line_gpu_fan_speed = f"Uso atual da GPU: {data[14]}%"
+    line_gpu_energy = f"Consumo atual de energia elétrica pela GPU: {data[15]} W"
+    line_timestamp = f"Momento de captura: {data[16].strftime('%Y-%m-%d %H:%M:%S')}"
+    line_machine_code = f"Código de identificação da máquina: {data[17]}"
 
     print(f"""
     ----------------------------------------------------------------
@@ -158,6 +198,8 @@ def exhibit(data):
     | {line_disk:<60} |
     | {line_gpu_usage:<60} |
     | {line_gpu_energy:<60} |
+    | {line_gpu_temp:<60} |
+    | {line_gpu_fan_speed:<60} |
     | {line_timestamp:<60} |
     | {line_machine_code:<60} |
     ----------------------------------------------------------------
@@ -167,11 +209,11 @@ def store(data, nome_arquivo):
     if(not os.path.exists(nome_arquivo)):
         with open(nome_arquivo, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "timestamp", "machine_code"])
+                writer.writerow(["user", "cpu_percent", "cpu_frequency", "ram_percent", "swap_memory_total", "swap_memory_used", "swap_memory_percent", "upload_speed", "download_speed", "temperature", "fans_speed", "disk", "gpu_usage", "gpu_energy", "gpu_temp", "gpu_fan_speed", "timestamp", "machine_code"])
     
     with open(nome_arquivo, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=';')
-        writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]])
+        writer.writerow([data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15], data[16], data[17]])
    
 
 
@@ -204,4 +246,8 @@ if(resultado1):
         print("Encerrado")
 else:
     print("seu mac nao esta no banco")
-    
+
+
+
+
+
