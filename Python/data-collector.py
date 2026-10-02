@@ -117,6 +117,9 @@ def capture(components):
         disk = round(((psutil.disk_usage('/').free) / (1024 ** 3)), 2) if components[10] == 1 else None
 
         if components[11] == 1:
+            gpu_usage = 0.0
+            gpu_temperature = 0
+            gpu_fan_speed = 0
             try: 
                 pynvml.nvmlInit()
                 deviceCount = pynvml.nvmlDeviceGetCount()
@@ -134,8 +137,12 @@ def capture(components):
                 gpu_fan_speed = speeds.get('gpu_fan')
             except Exception:
                 gpu_usage = 0.0
+                gpu_temperature = 0
+                gpu_fan_speed = 0
         else:
             gpu_usage = None
+            gpu_temperature = None
+            gpu_fan_speed = None
 
         if components[12] == 1:
             try:
@@ -157,9 +164,14 @@ def capture(components):
 
         machine_code = 'COD0001'
 
-        exhibit([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, gpu_temp, gpu_fan_speed, timestamp, machine_code])
-        store([user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total, swap_memory_used, swap_memory_percent, upload_speed, download_speed, temperature, fans_speed, disk, gpu_usage, gpu_energy, gpu_temp, gpu_fan_speed, timestamp, machine_code], nome_arquivo)
+        dados = [user, cpu_percent, cpu_frequency, ram_percent, swap_memory_total,
+                swap_memory_used, swap_memory_percent, upload_speed, download_speed,
+                temperature, fans_speed, disk, gpu_usage, gpu_energy,
+                gpu_temperature, gpu_fan_speed, timestamp, machine_code]
 
+        exhibit(dados)
+        store(dados, nome_arquivo)
+  
         time.sleep(intervalo_captura - 1)
 
 def exhibit(data):
@@ -176,11 +188,11 @@ def exhibit(data):
     line_fans_speed = f"Velocidade atual das ventoinhas: {data[10]} RPM"
     line_disk = f"Espaço livre em disco: {data[11]} GiB"
     line_gpu_usage = f"Uso atual da GPU: {data[12]}%"
-    line_gpu_temp = f"Uso atual da GPU: {data[13]}%"
-    line_gpu_fan_speed = f"Uso atual da GPU: {data[14]}%"
-    line_gpu_energy = f"Consumo atual de energia elétrica pela GPU: {data[15]} W"
+    line_gpu_energy = f"Consumo atual de energia elétrica pela GPU: {data[13]} W"
+    line_gpu_temp = f"Temperatura atual da GPU: {data[14]} graus Celsius"
+    line_gpu_fan_speed = f"Velocidade da ventoinha da GPU: {data[15]} RPM"
     line_timestamp = f"Momento de captura: {data[16].strftime('%Y-%m-%d %H:%M:%S')}"
-    line_machine_code = f"Código de identificação da máquina: {data[1]}"
+    line_machine_code = f"Código de identificação da máquina: {data[17]}"
 
     print(f"""
     ----------------------------------------------------------------
